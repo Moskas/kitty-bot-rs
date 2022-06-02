@@ -8,8 +8,10 @@ use serenity::model::channel::Message;
 
 use std::fs;
 
+use owoify_rs::{Owoifiable, OwoifyLevel};
+
 #[group]
-#[commands(ping, test)]
+#[commands(ping, test, owo, uwu)]
 struct General;
 
 struct Handler;
@@ -45,6 +47,30 @@ async fn ping(ctx: &Context, msg: &Message) -> CommandResult {
 #[command]
 async fn test(ctx: &Context, msg: &Message) -> CommandResult {
     msg.reply(ctx, "Rust!").await?;
+
+    Ok(())
+}
+#[command]
+async fn owo(ctx: &Context, msg: &Message) -> CommandResult {
+    let message: String = (msg.content_safe(ctx).await)
+        .split("*owo")
+        .skip(1)
+        .map(str::to_string)
+        .collect();
+    //let info: String = message.split('~').skip(1).map(str::to_string).collect();
+    msg.reply(ctx, message.owoify(&OwoifyLevel::Owo)).await?;
+
+    Ok(())
+}
+#[command]
+async fn uwu(ctx: &Context, msg: &Message) -> CommandResult {
+    let message: String = (msg.content_safe(ctx).await)
+        .split("*uwu")
+        .skip(1)
+        .map(str::to_string)
+        .collect();
+
+    msg.reply(ctx, message.owoify(&OwoifyLevel::Uwu)).await?;
 
     Ok(())
 }
