@@ -459,6 +459,7 @@ name = "kitty-bot-rs"
 version = "0.0.1"
 dependencies = [
  "owoify_rs",
+ "rand 0.8.5",
  "serenity",
  "tokio",
 ]
