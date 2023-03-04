@@ -6,13 +6,14 @@ use serenity::framework::standard::{
     CommandResult, StandardFramework,
 };
 use serenity::model::channel::Message;
+use serenity::prelude::GatewayIntents;
 use std::fs;
 use std::time::SystemTime; // Execution time testing
 
 use owoify_rs::{Owoifiable, OwoifyLevel};
 
 #[group]
-#[commands(ping, roll, owo, uwu)]
+#[commands(ping, roll, owo, uwu, avatar, whoami, status)]
 struct General;
 
 struct Handler;
@@ -28,7 +29,8 @@ async fn main() {
 
     // Login with a bot token from my user config directory (TODO change path)
     let token: String = fs::read_to_string("/home/moskas/.config/key.txt").expect(":thinking:");
-    let mut client = Client::builder(token.trim())
+    let intents = GatewayIntents::non_privileged() | GatewayIntents::MESSAGE_CONTENT;
+    let mut client = Client::builder(token.trim(), intents)
         .event_handler(Handler)
         .framework(framework)
         .await
@@ -47,7 +49,7 @@ async fn ping(ctx: &Context, msg: &Message) -> CommandResult {
 }
 #[command]
 async fn roll(ctx: &Context, msg: &Message) -> CommandResult {
-    let sides: i32 = (msg.content_safe(ctx).await)
+    let sides: i32 = (msg.content_safe(ctx))
         .split_whitespace()
         .skip(1)
         .map(str::to_string)
@@ -61,31 +63,31 @@ async fn roll(ctx: &Context, msg: &Message) -> CommandResult {
 }
 #[command]
 async fn owo(ctx: &Context, msg: &Message) -> CommandResult {
-    let message: String = (msg.content_safe(ctx).await)
+    let message: String = (msg.content_safe(ctx))
         .split("*owo")
         .skip(1)
         .map(str::to_string)
         .collect();
     println!("{}", message.len());
     //let info: String = message.split('~').skip(1).map(str::to_string).collect();
-    msg.reply(ctx, message.owoify(&OwoifyLevel::Owo)).await?;
+    msg.reply(ctx, message.owoify(OwoifyLevel::Owo)).await?;
 
     Ok(())
 }
 #[command]
 async fn uwu(ctx: &Context, msg: &Message) -> CommandResult {
     let start = SystemTime::now();
-    let message: String = (msg.content_safe(ctx).await)
+    let message: String = (msg.content_safe(ctx))
         .split("*uwu")
         .skip(1)
         .map(str::to_string)
         .collect::<String>()
-        .owoify(&OwoifyLevel::Uwu);
+        .owoify(OwoifyLevel::Uwu);
     println!("{}", message.len());
     if message.len() >= 2000 {
         msg.reply(
             ctx,
-            "Owoified message is longer than 2000 characters".owoify(&OwoifyLevel::Owo),
+            "Owoified message is longer than 2000 characters".owoify(OwoifyLevel::Owo),
         )
         .await?;
     //        let splitter: Vec<&str> = Vec::new();
@@ -98,5 +100,33 @@ async fn uwu(ctx: &Context, msg: &Message) -> CommandResult {
         "Execution time: {}ms",
         elapsed.unwrap_or_default().as_millis()
     );
+    Ok(())
+}
+
+#[command]
+async fn avatar(ctx: &Context, msg: &Message) -> CommandResult {
+    msg.reply(
+        ctx,
+        format!("Your avatar: {}", msg.author.static_avatar_url().unwrap()),
+    )
+    .await?;
+    Ok(())
+}
+
+#[command]
+async fn whoami(ctx: &Context, msg: &Message) -> CommandResult {
+    println!(
+        "{} {} {:?}",
+        msg.author.static_avatar_url().unwrap(),
+        msg.author.id,
+        msg.author.accent_colour.unwrap()
+    );
+    msg.reply(ctx, msg.author.to_string()).await?;
+    Ok(())
+}
+
+#[command]
+async fn status(ctx: &Context, msg: &Message) -> CommandResult {
+    msg.delete(ctx).await?;
     Ok(())
 }
