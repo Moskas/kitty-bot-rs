@@ -8,12 +8,12 @@ use serenity::framework::standard::{
 use serenity::model::channel::Message;
 use serenity::prelude::GatewayIntents;
 use std::fs;
-use std::time::SystemTime; // Execution time testing
+//use std::time::SystemTime; // Execution time testing
 
 use owoify_rs::{Owoifiable, OwoifyLevel};
 
 #[group]
-#[commands(ping, roll, owo, uwu, avatar, whoami, status)]
+#[commands(ping, roll, choose, owo, uwu, avatar, whoami, status)]
 struct General;
 
 struct Handler;
@@ -49,18 +49,38 @@ async fn ping(ctx: &Context, msg: &Message) -> CommandResult {
 }
 #[command]
 async fn roll(ctx: &Context, msg: &Message) -> CommandResult {
-    let sides: i32 = (msg.content_safe(ctx))
+    let sides: i32 = match (msg.content_safe(ctx))
         .split_whitespace()
         .skip(1)
         .map(str::to_string)
         .collect::<String>()
         .parse::<i32>()
-        .unwrap();
+    {
+        Ok(number) => number,
+        Err(_e) => 6,
+    };
     let roll: i32 = thread_rng().gen_range(1..=sides);
     msg.reply(ctx, format!("You have rolled: {} :game_die:", roll))
         .await?;
     Ok(())
 }
+
+#[command]
+async fn choose(ctx: &Context, msg: &Message) -> CommandResult {
+    let options: Vec<String> = msg
+        .content_safe(ctx)
+        .split("*choose")
+        .map(str::to_string)
+        .collect::<String>()
+        .split("|")
+        .map(str::to_string)
+        .collect();
+    let random_index: usize = thread_rng().gen_range(0..options.len());
+    msg.reply(ctx, format!("I choose: {}", options[random_index]))
+        .await?;
+    Ok(())
+}
+
 #[command]
 async fn owo(ctx: &Context, msg: &Message) -> CommandResult {
     let message: String = (msg.content_safe(ctx))
@@ -69,14 +89,12 @@ async fn owo(ctx: &Context, msg: &Message) -> CommandResult {
         .map(str::to_string)
         .collect();
     println!("{}", message.len());
-    //let info: String = message.split('~').skip(1).map(str::to_string).collect();
     msg.reply(ctx, message.owoify(OwoifyLevel::Owo)).await?;
 
     Ok(())
 }
 #[command]
 async fn uwu(ctx: &Context, msg: &Message) -> CommandResult {
-    let start = SystemTime::now();
     let message: String = (msg.content_safe(ctx))
         .split("*uwu")
         .skip(1)
@@ -94,12 +112,6 @@ async fn uwu(ctx: &Context, msg: &Message) -> CommandResult {
     } else {
         msg.reply(ctx, message).await?;
     }
-    let end = SystemTime::now();
-    let elapsed = end.duration_since(start);
-    println!(
-        "Execution time: {}ms",
-        elapsed.unwrap_or_default().as_millis()
-    );
     Ok(())
 }
 
